@@ -149,7 +149,8 @@ class InstructionDecode extends Module {
   io.regs_reg2_read_address := rs2
   val immediate = MuxLookup(
     opcode,
-    Cat(Fill(20, io.instruction(31)), io.instruction(31, 20)),
+    Cat(Fill(20, io.instruction(31)), io.instruction(31, 20))
+  ) {
     IndexedSeq(
       InstructionTypes.I -> Cat(Fill(21, io.instruction(31)), io.instruction(30, 20)),
       InstructionTypes.L -> Cat(Fill(21, io.instruction(31)), io.instruction(30, 20)),
@@ -173,7 +174,7 @@ class InstructionDecode extends Module {
         0.U(1.W)
       )
     )
-  )
+  }
   io.ex_immediate := immediate
   io.ex_aluop1_source := Mux(
     opcode === Instructions.auipc || opcode === InstructionTypes.B || opcode === Instructions.jal,
@@ -189,13 +190,14 @@ class InstructionDecode extends Module {
   //                   S-type (rs2 value sent to MemControl, ALU computes rs1 + imm.)
   //                   B-type (rs2 compares with rs1 in jump judge unit, ALU computes jump address PC+imm.)
   io.ex_aluop2_source := Mux(
-    opcode === InstructionTypes.RM,
+    opcode === InstructionTypes.RM, // RM means R-type or M-type
     ALUOp2Source.Register,
     ALUOp2Source.Immediate
   )
 
   // lab3(InstructionDecode) begin
-
+  io.memory_read_enable := Mux(opcode === InstructionTypes.L, true.B, false.B)
+  io.memory_write_enable := Mux(opcode === InstructionTypes.S, true.B, false.B)
   // lab3(InstructionDecode) end
 
   io.wb_reg_write_source := MuxCase(

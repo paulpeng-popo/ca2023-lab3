@@ -37,15 +37,17 @@ class Execute extends Module {
   alu_ctrl.io.funct7 := funct7
 
   // lab3(Execute) begin
-
+  alu.io.func := alu_ctrl.io.alu_funct
+  alu.io.op1 := Mux(io.aluop1_source === 0.U, io.reg1_data, io.instruction_address)
+  alu.io.op2 := Mux(io.aluop2_source === 0.U, io.reg2_data, io.immediate)
   // lab3(Execute) end
 
   io.mem_alu_result := alu.io.result
   io.if_jump_flag := opcode === Instructions.jal ||
     (opcode === Instructions.jalr) ||
     (opcode === InstructionTypes.B) && MuxLookup(
-      funct3,
-      false.B,
+      funct3, false.B
+    ) {
       IndexedSeq(
         InstructionsTypeB.beq  -> (io.reg1_data === io.reg2_data),
         InstructionsTypeB.bne  -> (io.reg1_data =/= io.reg2_data),
@@ -54,6 +56,6 @@ class Execute extends Module {
         InstructionsTypeB.bltu -> (io.reg1_data.asUInt < io.reg2_data.asUInt),
         InstructionsTypeB.bgeu -> (io.reg1_data.asUInt >= io.reg2_data.asUInt)
       )
-    )
+    }
   io.if_jump_address := io.immediate + Mux(opcode === Instructions.jalr, io.reg1_data, io.instruction_address)
 }
